@@ -121,7 +121,7 @@ class Environment:
         self.__reward_check = -self.__reward_goal
 
     def do(self, state, action):
-        #time.sleep(0.1)
+        #time.sleep(2)
         #check = False
         move = ACTION_MOVE[action]
         new_state = (state[0] + move[0], state[1] + move[1])
@@ -372,8 +372,26 @@ class MazeWindow(arcade.Window):
     def on_update(self, delta_time):
         if self.__agent.state != self.__agent.environment.goal:
             self.__agent.step()
+            action = self.__agent.action
+            if action == ACTION_UP:
+                self.angle = 270
+            elif action == ACTION_LEFT:
+                self.angle = 180
+            elif action == ACTION_RIGHT:
+                self.angle = 0
+            elif action == ACTION_DOWN:
+                self.angle = 90
+            elif action == ACTION_UP_LEFT:
+                self.angle = 225
+            elif action == ACTION_UP_RIGHT:
+                self.angle = 315
+            elif action == ACTION_DOWN_LEFT:
+                self.angle = 135
+            elif action == ACTION_DOWN_RIGHT:
+                self.angle = 45
             self.__player1.center_x, self.__player1.center_y = self.state_to_xy(self.__agent.state)
-            self.__player1.rotate_around_point(self.__player1.position, 120 * delta_time)
+            self.__player1.rotate_around_point(self.__player1.position, self.angle)
+            print(action, self.angle)
         else:
             self.__agent.reset()
             self.__iteration += 1
