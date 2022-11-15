@@ -88,6 +88,9 @@ SPRITE_CAR_SCALE = 0.04
 SPRITE_FIELD_SCALE = 0.4
 SPRITE_SIZE = round(128 * SPRITE_SCALE)
 
+SPRITE_YELLOW_CAR = 'sprite_car_yellow.png'
+SPRITE_RED_CAR = 'sprite_car_red.png'
+
 FILE_AGENT = 'agent.al1'
 DIR_SPRITES = os.getcwd() + '/sprites/'
 class Environment:
@@ -118,7 +121,7 @@ class Environment:
         self.__reward_check = -self.__reward_goal
 
     def do(self, state, action):
-        #time.sleep(0.1)
+        #time.sleep(2)
         #check = False
         move = ACTION_MOVE[action]
         new_state = (state[0] + move[0], state[1] + move[1])
@@ -289,6 +292,17 @@ class Agent:
         return res
 
 
+class RotatingSprite(arcade.Sprite):
+    def rotate_around_point(self, point: arcade.Point, degrees: float):
+        # Make the sprite turn as its position is moved
+        self.angle += degrees
+
+        # Move the sprite along a circle centered around the passed point
+        self.position = arcade.rotate_point(
+            self.center_x, self.center_y,
+            point[0], point[1], degrees)
+
+
 class MazeWindow(arcade.Window):
     def __init__(self, agent):
         super().__init__(SPRITE_SIZE * agent.environment.width,
@@ -312,18 +326,8 @@ class MazeWindow(arcade.Window):
             sprite.center_x, sprite.center_y = self.state_to_xy(state)
             self.__outsides.append(sprite)
 
-        self.__player_up = arcade.Sprite(os.path.join(DIR_SPRITES, 'sprite_car_yellow_up.png'), SPRITE_CAR_SCALE)
-        self.__player_down = arcade.Sprite(os.path.join(DIR_SPRITES, 'sprite_car_yellow_down.png'), SPRITE_CAR_SCALE)
-        self.__player_left = arcade.Sprite(os.path.join(DIR_SPRITES, 'sprite_car_yellow_left.png'), SPRITE_CAR_SCALE)
-        self.__player_right = arcade.Sprite(os.path.join(DIR_SPRITES, 'sprite_car_yellow_right.png'), SPRITE_CAR_SCALE)
-        self.__player_up_right = arcade.Sprite(os.path.join(DIR_SPRITES, 'sprite_car_yellow_up_right.png'),
-                                               SPRITE_CAR_SCALE)
-        self.__player_up_left = arcade.Sprite(os.path.join(DIR_SPRITES, 'sprite_car_yellow_up_left.png'),
-                                              SPRITE_CAR_SCALE)
-        self.__player_down_right = arcade.Sprite(os.path.join(DIR_SPRITES, 'sprite_car_yellow_down_right.png'),
-                                                 SPRITE_CAR_SCALE)
-        self.__player_down_left = arcade.Sprite(os.path.join(DIR_SPRITES, 'sprite_car_yellow_down_left.png'),
-                                                SPRITE_CAR_SCALE)
+        self.__player1 = RotatingSprite(os.path.join(DIR_SPRITES, SPRITE_YELLOW_CAR), SPRITE_CAR_SCALE)
+        self.__player2 = arcade.Sprite(os.path.join(DIR_SPRITES, SPRITE_RED_CAR), SPRITE_CAR_SCALE)
 
         self.__goal = arcade.SpriteList()
         for state in filter(self.__agent.environment.is_goal,
@@ -343,23 +347,24 @@ class MazeWindow(arcade.Window):
         self.__walls.draw()
         self.__outsides.draw()
         self.__goal.draw()
+        self.__player1.draw()
 
-        if self.__agent.action == ACTION_UP:
-            self.__player_up.draw()
-        elif self.__agent.action == ACTION_LEFT:
-            self.__player_left.draw()
-        elif self.__agent.action == ACTION_RIGHT:
-            self.__player_right.draw()
-        elif self.__agent.action == ACTION_DOWN:
-            self.__player_down.draw()
-        elif self.__agent.action == ACTION_UP_RIGHT:
-            self.__player_up_right.draw()
-        elif self.__agent.action == ACTION_UP_LEFT:
-            self.__player_up_left.draw()
-        elif self.__agent.action == ACTION_DOWN_LEFT:
-            self.__player_down_left.draw()
-        elif self.__agent.action == ACTION_DOWN_RIGHT:
-            self.__player_down_right.draw()
+        # if self.__agent.action == ACTION_UP:
+        #     self.__player_up.draw()
+        # elif self.__agent.action == ACTION_LEFT:
+        #     self.__player_left.draw()
+        # elif self.__agent.action == ACTION_RIGHT:
+        #     self.__player_right.draw()
+        # elif self.__agent.action == ACTION_DOWN:
+        #     self.__player_down.draw()
+        # elif self.__agent.action == ACTION_UP_RIGHT:
+        #     self.__player_up_right.draw()
+        # elif self.__agent.action == ACTION_UP_LEFT:
+        #     self.__player_up_left.draw()
+        # elif self.__agent.action == ACTION_DOWN_LEFT:
+        #     self.__player_down_left.draw()
+        # elif self.__agent.action == ACTION_DOWN_RIGHT:
+        #     self.__player_down_right.draw()
 
         arcade.draw_text(f'#{self.__iteration} Score: {self.__agent.score}', 10, 10,
                          arcade.csscolor.WHITE, 20)
@@ -367,14 +372,26 @@ class MazeWindow(arcade.Window):
     def on_update(self, delta_time):
         if self.__agent.state != self.__agent.environment.goal:
             self.__agent.step()
-            self.__player_up.center_x, self.__player_up.center_y = self.state_to_xy(self.__agent.state)
-            self.__player_left.center_x, self.__player_left.center_y = self.state_to_xy(self.__agent.state)
-            self.__player_right.center_x, self.__player_right.center_y = self.state_to_xy(self.__agent.state)
-            self.__player_down.center_x, self.__player_down.center_y = self.state_to_xy(self.__agent.state)
-            self.__player_down_right.center_x, self.__player_down_right.center_y = self.state_to_xy(self.__agent.state)
-            self.__player_down_left.center_x, self.__player_down_left.center_y = self.state_to_xy(self.__agent.state)
-            self.__player_up_left.center_x, self.__player_up_left.center_y = self.state_to_xy(self.__agent.state)
-            self.__player_up_right.center_x, self.__player_up_right.center_y = self.state_to_xy(self.__agent.state)
+            action = self.__agent.action
+            if action == ACTION_UP:
+                self.angle = 270
+            elif action == ACTION_LEFT:
+                self.angle = 180
+            elif action == ACTION_RIGHT:
+                self.angle = 0
+            elif action == ACTION_DOWN:
+                self.angle = 90
+            elif action == ACTION_UP_LEFT:
+                self.angle = 225
+            elif action == ACTION_UP_RIGHT:
+                self.angle = 315
+            elif action == ACTION_DOWN_LEFT:
+                self.angle = 135
+            elif action == ACTION_DOWN_RIGHT:
+                self.angle = 45
+            self.__player1.center_x, self.__player1.center_y = self.state_to_xy(self.__agent.state)
+            self.__player1.rotate_around_point(self.__player1.position, self.angle)
+            print(action, self.angle)
         else:
             self.__agent.reset()
             self.__iteration += 1
